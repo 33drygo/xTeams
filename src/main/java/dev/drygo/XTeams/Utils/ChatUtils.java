@@ -53,13 +53,13 @@ public class ChatUtils {
 
         if (player != null) {
             message = message.replace("%player%", Objects.requireNonNull(player.getName()));
+            if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+                message = PlaceholderAPI.setPlaceholders(player, message);
+            }
         } else {
             message = message.replace("%player%", "Unknown");
         }
 
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            message = PlaceholderAPI.setPlaceholders(player, message);
-        }
 
         message = message.replace("%prefix%", ConfigManager.getPrefix());
 

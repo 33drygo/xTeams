@@ -8,7 +8,7 @@ import java.util.*;
 public class XTeamsAPI {
 
     public static Team getTeam(String name) {
-        return TeamManager.getTeamByName(name);
+        return TeamManager.getTeam(name);
     }
 
     public static Set<Team> getAllTeams() {
@@ -21,6 +21,10 @@ public class XTeamsAPI {
 
     public static void deleteTeam(Team team) {
         TeamManager.deleteTeam(team);
+    }
+
+    public static void setDisplayName(Team team, String displayName) {
+        TeamManager.setDisplayName(team, displayName);
     }
 
     public static Map<String, Object> getTeamInfo(Team team) {

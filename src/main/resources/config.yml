@@ -13,6 +13,11 @@
 # Welcome to the configuration file of the plugin xTeams. Here you can modify some plugin settings.
 
 # List of teams and the list of players in the team.
+settings:
+  # Player identification mode:
+  # - "nickname" → for non-premium servers (offline mode)
+  # - "uuid"     → for premium servers (online mode), more robust against name changes
+  identifier_mode: "uuid"
 hooks:
   luckperms:
     enabled: false

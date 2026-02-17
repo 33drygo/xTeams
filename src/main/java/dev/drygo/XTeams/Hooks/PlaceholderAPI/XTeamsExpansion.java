@@ -2,12 +2,44 @@ package dev.drygo.XTeams.Hooks.PlaceholderAPI;
 
 import dev.drygo.XTeams.Managers.TeamManager;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import dev.drygo.XTeams.XTeams;
 import dev.drygo.XTeams.Models.Team;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
+/**
+ * Placeholders disponibles:
+ *
+ * --- Del jugador que ejecuta el placeholder ---
+ * %xteams_team%                        → nombre del equipo principal del jugador
+ * %xteams_team_display%                → displayName del equipo principal
+ * %xteams_team_priority%               → prioridad del equipo principal
+ * %xteams_in_team_<team>%              → true/false si el jugador está en <team>
+ * %xteams_in_any_team%                 → true/false si el jugador está en algún equipo
+ * %xteams_team_count%                  → cantidad de equipos en los que está el jugador
+ * %xteams_teams_list%                  → lista de equipos del jugador separados por ", "
+ *
+ * --- De otro jugador (por nombre) ---
+ * %xteams_player_team_<player>%        → equipo principal de <player>
+ * %xteams_player_team_display_<player>% → displayName del equipo principal de <player>
+ * %xteams_player_in_team_<player>:<team>% → true/false si <player> está en <team>
+ * %xteams_player_in_any_team_<player>% → true/false si <player> está en algún equipo
+ * %xteams_player_team_count_<player>%  → cantidad de equipos de <player>
+ *
+ * --- De un equipo específico ---
+ * %xteams_exists_<team>%               → true/false si el equipo existe
+ * %xteams_display_<team>%              → displayName del equipo
+ * %xteams_priority_<team>%             → prioridad del equipo
+ * %xteams_size_<team>%                 → número de miembros del equipo
+ * %xteams_members_<team>%              → miembros del equipo separados por ", "
+ *
+ * --- Globales ---
+ * %xteams_total_teams%                 → número total de equipos registrados
+ * %xteams_total_players%               → número total de jugadores en algún equipo
+ * %xteams_all_teams%                   → lista de todos los equipos separados por ", "
+ */
 public class XTeamsExpansion extends PlaceholderExpansion {
 
     private final XTeams plugin;
@@ -17,92 +49,154 @@ public class XTeamsExpansion extends PlaceholderExpansion {
     }
 
     @Override
-    public @NotNull String getIdentifier() {
-        return "xteams";
-    }
+    public @NotNull String getIdentifier() { return "xteams"; }
 
     @Override
-    public @NotNull String getAuthor() {
-        return "Drygo";
-    }
+    public @NotNull String getAuthor() { return "Drygo"; }
 
     @Override
-    public @NotNull String getVersion() {
-        return plugin.getDescription().getVersion();
-    }
+    public @NotNull String getVersion() { return plugin.getDescription().getVersion(); }
 
     @Override
-    public String onRequest(OfflinePlayer player, String params) {
-        if (params.startsWith("hasplayer_")) {
-            String[] parts = params.replace("hasplayer_", "").split(":");
-            if (parts.length == 2) {
-                String teamName = parts[0];
-                String targetPlayerName = parts[1];
-                Team team = TeamManager.getTeam(teamName);
-                return (team != null && team.hasMember(targetPlayerName)) ? "true" : "false";
-            }
+    public boolean persist() { return true; }
+
+    @Override
+    public String onRequest(OfflinePlayer player, @NotNull String params) {
+
+        // ── Globales ──────────────────────────────────────────────────────────
+
+        if (params.equals("total_teams")) {
+            return String.valueOf(TeamManager.getAllTeams().size());
         }
 
-        if (params.startsWith("teamname_")) {
-            String targetPlayer = params.replace("teamname_", "");
-            OfflinePlayer target = Bukkit.getOfflinePlayer(targetPlayer);
-            return getTeamWithHighestPriority(target, true);
+        if (params.equals("total_players")) {
+            return String.valueOf(TeamManager.getAllPlayersInTeams().size());
         }
 
-        if (params.startsWith("teamdisplayname_")) {
-            String targetPlayer = params.replace("teamdisplayname_", "");
-            OfflinePlayer target = Bukkit.getOfflinePlayer(targetPlayer);
-            return getTeamWithHighestPriority(target, false);
-        }
-
-        if (params.startsWith("playercount_")) {
-            String teamName = params.replace("playercount_", "");
-            Team team = TeamManager.getTeam(teamName);
-            return team != null ? String.valueOf(team.getMembers().size()) : "null";
-        }
-
-        if (params.startsWith("teammembers_")) {
-            String teamName = params.replace("teammembers_", "");
-            Team team = TeamManager.getTeam(teamName);
-            return team != null ? String.join(", ", team.getMembers()) : "null";
-        }
-
-        if (params.equals("teams")) {
+        if (params.equals("all_teams")) {
             return String.join(", ", TeamManager.listTeams());
         }
 
-        if (params.startsWith("teamexists_")) {
-            String teamName = params.replace("teamexists_", "");
-            return TeamManager.teamExists(teamName) ? "true" : "false";
+        // ── Por equipo ────────────────────────────────────────────────────────
+
+        if (params.startsWith("exists_")) {
+            String teamName = params.substring("exists_".length());
+            return bool(TeamManager.teamExists(teamName));
         }
 
-        if (params.startsWith("teampriority_")) {
-            String teamName = params.replace("teampriority_", "");
+        if (params.startsWith("display_")) {
+            String teamName = params.substring("display_".length());
+            Team team = TeamManager.getTeam(teamName);
+            return team != null ? team.getDisplayName() : "null";
+        }
+
+        if (params.startsWith("priority_")) {
+            String teamName = params.substring("priority_".length());
             Team team = TeamManager.getTeam(teamName);
             return team != null ? String.valueOf(team.getPriority()) : "null";
         }
 
+        if (params.startsWith("size_")) {
+            String teamName = params.substring("size_".length());
+            Team team = TeamManager.getTeam(teamName);
+            return team != null ? String.valueOf(team.getMembers().size()) : "null";
+        }
+
+        if (params.startsWith("members_")) {
+            String teamName = params.substring("members_".length());
+            Team team = TeamManager.getTeam(teamName);
+            return team != null ? String.join(", ", team.getResolvedMemberNames()) : "null";
+        }
+
+        // ── Por otro jugador ──────────────────────────────────────────────────
+
+        if (params.startsWith("player_team_display_")) {
+            String targetName = params.substring("player_team_display_".length());
+            return getMainTeamField(targetName, false);
+        }
+
+        if (params.startsWith("player_team_count_")) {
+            String targetName = params.substring("player_team_count_".length());
+            return String.valueOf(TeamManager.getPlayerTeams(targetName).size());
+        }
+
+        if (params.startsWith("player_in_any_team_")) {
+            String targetName = params.substring("player_in_any_team_".length());
+            return bool(TeamManager.isInAnyTeam(targetName));
+        }
+
+        if (params.startsWith("player_in_team_")) {
+            // formato: player_in_team_<player>:<team>
+            String rest = params.substring("player_in_team_".length());
+            String[] parts = rest.split(":", 2);
+            if (parts.length == 2) {
+                Team team = TeamManager.getTeam(parts[1]);
+                return bool(team != null && team.hasMember(parts[0]));
+            }
+            return "null";
+        }
+
+        if (params.startsWith("player_team_")) {
+            // va después de player_team_display_ para no colisionar
+            String targetName = params.substring("player_team_".length());
+            return getMainTeamField(targetName, true);
+        }
+
+        // ── Del jugador actual ────────────────────────────────────────────────
+
+        if (player == null) return "null";
+        String playerName = player.getName();
+        if (playerName == null) return "null";
+
+        if (params.equals("team")) {
+            return getMainTeamField(playerName, true);
+        }
+
+        if (params.equals("team_display")) {
+            return getMainTeamField(playerName, false);
+        }
+
+        if (params.equals("team_priority")) {
+            Team main = TeamManager.getPlayerTeam(playerName);
+            return main != null ? String.valueOf(main.getPriority()) : "null";
+        }
+
+        if (params.equals("in_any_team")) {
+            return bool(TeamManager.isInAnyTeam(playerName));
+        }
+
+        if (params.equals("team_count")) {
+            return String.valueOf(TeamManager.getPlayerTeams(playerName).size());
+        }
+
+        if (params.equals("teams_list")) {
+            List<Team> playerTeams = TeamManager.getPlayerTeams(playerName);
+            if (playerTeams.isEmpty()) return "none";
+            StringBuilder sb = new StringBuilder();
+            playerTeams.stream()
+                    .sorted((a, b) -> Integer.compare(b.getPriority(), a.getPriority()))
+                    .forEach(t -> sb.append(t.getName()).append(", "));
+            return sb.substring(0, sb.length() - 2);
+        }
+
+        if (params.startsWith("in_team_")) {
+            String teamName = params.substring("in_team_".length());
+            Team team = TeamManager.getTeam(teamName);
+            return bool(team != null && team.hasMember(playerName));
+        }
+
         return null;
     }
-    private String getTeamWithHighestPriority(OfflinePlayer player, boolean returnName) {
-        Team highestPriorityTeam = null;
-        int highestPriority = Integer.MIN_VALUE;
 
-        for (String teamName : TeamManager.listTeams()) {
-            Team team = TeamManager.getTeam(teamName);
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-            if (team != null && team.hasMember(player.getName())) {
-                if (team.getPriority() > highestPriority) {
-                    highestPriority = team.getPriority();
-                    highestPriorityTeam = team;
-                }
-            }
-        }
+    private String getMainTeamField(String playerName, boolean returnName) {
+        Team main = TeamManager.getPlayerTeam(playerName);
+        if (main == null) return "null";
+        return returnName ? main.getName() : main.getDisplayName();
+    }
 
-        if (highestPriorityTeam != null) {
-            return returnName ? highestPriorityTeam.getName() : highestPriorityTeam.getDisplayName();
-        }
-
-        return "null";
+    private String bool(boolean value) {
+        return value ? "true" : "false";
     }
 }

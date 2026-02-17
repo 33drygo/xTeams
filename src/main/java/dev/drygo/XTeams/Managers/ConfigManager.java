@@ -39,7 +39,6 @@ public class ConfigManager {
             }
 
             messagesConfig = YamlConfiguration.loadConfiguration(messagesFile);
-            plugin.prefix = ChatUtils.formatColor("#ffbaff&lx&r&lTeams &cDefault Prefix &8»&r");
         } catch (Exception e) {
             plugin.getLogger().severe("❌ Failed to load messages configuration due to an unexpected error: " + e.getMessage());
             e.printStackTrace();
@@ -94,7 +93,7 @@ public class ConfigManager {
     }
 
     public static String getPrefix() { return plugin.prefix; }
-    public static void setPrefix(String prefix) { plugin.prefix = prefix; }
+    public static void setPrefix(String newPrefix) { plugin.prefix = newPrefix; }
     public static FileConfiguration getMessageConfig() {
         return messagesConfig;
     }

@@ -148,7 +148,7 @@ public class XTeamsCommand implements CommandExecutor {
             return false;
         }
 
-        Team team = TeamManager.getTeamByName(teamName);
+        Team team = TeamManager.getTeam(teamName);
         if (team != null) {
             sender.sendMessage(ChatUtils.getMessage("error.commands.team_already_exists", null).replace("%team%", teamName));
             return false;
@@ -179,11 +179,10 @@ public class XTeamsCommand implements CommandExecutor {
             }
             TeamManager.deleteAllTeams();
             sender.sendMessage(ChatUtils.getMessage("commands.delete.successall", null));
-            ConfigManager.saveTeamsToConfig();
             return true;
         }
 
-        Team team = TeamManager.getTeamByName(teamName);
+        Team team = TeamManager.getTeam(teamName);
         if (team == null) {
             sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null).replace("%team%", teamName));
             return false;
@@ -210,7 +209,7 @@ public class XTeamsCommand implements CommandExecutor {
 
         displayName = displayName.substring(1, displayName.length() - 1);
 
-        Team team = TeamManager.getTeamByName(teamName);
+        Team team = TeamManager.getTeam(teamName);
         if (team == null) {
             sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null).replace("%team%", teamName));
             return false;
@@ -229,7 +228,7 @@ public class XTeamsCommand implements CommandExecutor {
         }
 
         String teamName = args[1];
-        Team team = TeamManager.getTeamByName(teamName);
+        Team team = TeamManager.getTeam (teamName);
         if (team == null) {
             sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null).replace("%team%", teamName));
             return false;
@@ -430,8 +429,6 @@ public class XTeamsCommand implements CommandExecutor {
             sender.sendMessage(ChatUtils.getMessage(msgKey, null)
                     .replace("%team%", teamName)
                     .replace("%target%", targetName));
-
-            ConfigManager.saveTeamsToConfig();
             return true;
         }
 
@@ -446,7 +443,6 @@ public class XTeamsCommand implements CommandExecutor {
 
             player.sendMessage(ChatUtils.getMessage("commands.join.self.success_all", null)
                     .replace("%target%", player.getName()));
-            ConfigManager.saveTeamsToConfig();
             return true;
         }
 
@@ -543,7 +539,6 @@ public class XTeamsCommand implements CommandExecutor {
                     .replace("%team%", teamName)
                     .replace("%target%", targetName));
 
-            ConfigManager.saveTeamsToConfig();
             return true;
         }
 
@@ -600,7 +595,7 @@ public class XTeamsCommand implements CommandExecutor {
             }
         }
 
-        sender.sendMessage(ChatUtils.getMessage("commands.sync.success", (Player) sender).replace("%count%", String.valueOf(count)));
+        sender.sendMessage(ChatUtils.getMessage("commands.sync.success", null).replace("%count%", String.valueOf(count)));
     }
 
 
@@ -644,9 +639,8 @@ public class XTeamsCommand implements CommandExecutor {
             );
         }
 
-        for (String line : helpMessages) {
-            String formattedLine = PlaceholderAPI.setPlaceholders((OfflinePlayer) sender, line);
-            sender.sendMessage(ChatUtils.formatColor(formattedLine));
+        for (String l : helpMessages) {
+            sender.sendMessage(ChatUtils.formatColor(l));
         }
         return false;
     }
@@ -672,15 +666,11 @@ public class XTeamsCommand implements CommandExecutor {
         sender.sendMessage(ChatUtils.formatColor("&f                                ᴀᴜᴛᴏ-ᴛᴇᴀᴍ #707070» #FFFAAB" + autoTeamStatus));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("#fff18d&l                      ᴠᴇʀꜱɪᴏɴ ᴄʜᴀɴɢᴇꜱ"));
-        sender.sendMessage(ChatUtils.formatColor("&f            #7070701. #FFFAABFixed plugin loading without LuckPerms installed."));
-        sender.sendMessage(ChatUtils.formatColor("&f            #7070702. #FFFAABFixed saving config on disabling plugin and"));
-        sender.sendMessage(ChatUtils.formatColor("&f                #FFFAABsaving config on TeamManager methods"));
-        sender.sendMessage(ChatUtils.formatColor("&f            #7070703. #FFFAABFixed attempt reload autoteam when is not enabled."));
-        sender.sendMessage(ChatUtils.formatColor("&f            #7070704. #FFFAABFixed teams saving and loading."));
+        sender.sendMessage(ChatUtils.formatColor("&f            #7070701. #FFFAABMake save config on team class setters,"));
+        sender.sendMessage(ChatUtils.formatColor("&f            #707070  instead of TeamManager"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("#fff18d&l               ᴅʀʏɢᴏ'ꜱ ɴᴏᴛᴇ ᴏꜰ ᴛʜᴇ ᴠᴇʀꜱɪᴏɴ"));
-        sender.sendMessage(ChatUtils.formatColor("&f  #FFFAAB        A mayor version adding other fixes I added"));
-        sender.sendMessage(ChatUtils.formatColor("&f  #FFFAAB     in the past, for other problems report the issue!"));
+        sender.sendMessage(ChatUtils.formatColor("&f  #FFFAAB            A fast bug fix I just found lol"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         return false;

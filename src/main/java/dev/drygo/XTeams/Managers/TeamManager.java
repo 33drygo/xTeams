@@ -1,5 +1,6 @@
 package dev.drygo.XTeams.Managers;
 
+import dev.drygo.XTeams.Utils.PlayerIdentifier;
 import org.bukkit.Bukkit;
 import dev.drygo.XTeams.API.Events.TeamCreateEvent;
 import dev.drygo.XTeams.API.Events.TeamDeleteEvent;
@@ -14,7 +15,7 @@ public class TeamManager {
 
     public static void addTeam(Team team) {
         teams.put(team.getName(), team);
-        ConfigManager.saveTeamsToConfig();
+        
     }
 
     public static Team getTeam(String teamName) {
@@ -64,12 +65,17 @@ public class TeamManager {
         if (!teamExists(name)) {
             Team team = new Team(name, displayName, priority, members);
             addTeam(team);
+            ConfigManager.saveTeamsToConfig();
             Bukkit.getPluginManager().callEvent(new TeamCreateEvent(team));
         }
     }
 
     public static void deleteAllTeams() {
-        teams.clear();
+        for (Team team : getAllTeams()) {
+            teams.remove(team.getName());
+            Bukkit.getPluginManager().callEvent(new TeamDeleteEvent(team.getName()));
+        }
+        ConfigManager.saveTeamsToConfig();
     }
 
     public static List<String> listTeams() {
@@ -92,67 +98,72 @@ public class TeamManager {
     }
 
     public static void joinTeam(String nickname, Team team) {
-        if (team != null && !team.getMembers().contains(nickname)) {
-            team.addMember(nickname);
+        String id = PlayerIdentifier.fromName(nickname);
+        if (team != null && !team.hasMember(id)) {
+            team.addMember(id);
             ConfigManager.saveTeamsToConfig();
             Bukkit.getPluginManager().callEvent(new TeamJoinEvent(Bukkit.getOfflinePlayer(nickname), team.getName()));
         }
     }
 
-    public static void joinAllTeams(String nickname) {
-        for (Team team : teams.values()) {
-            if (!team.getMembers().contains(nickname)) {
-                team.addMember(nickname);
-                ConfigManager.saveTeamsToConfig();
-                Bukkit.getPluginManager().callEvent(new TeamJoinEvent(Bukkit.getOfflinePlayer(nickname), team.getName()));
-            }
-        }
-    }
-
     public static void leaveTeam(String nickname, Team team) {
-        if (team != null && team.getMembers().contains(nickname)) {
-            team.removeMember(nickname);
+        String id = PlayerIdentifier.fromName(nickname);
+        if (team != null && team.hasMember(id)) {
+            team.removeMember(id);
             ConfigManager.saveTeamsToConfig();
             Bukkit.getPluginManager().callEvent(new TeamLeaveEvent(Bukkit.getOfflinePlayer(nickname), team.getName()));
         }
     }
 
-    public static void leaveAllTeams(String nickname) {
+    public static void joinAllTeams(String nickname) {
+        String id = PlayerIdentifier.fromName(nickname);
         for (Team team : teams.values()) {
-            if (team.getMembers().contains(nickname)) {
-                team.removeMember(nickname);
-                ConfigManager.saveTeamsToConfig();
+            if (!team.hasMember(id)) {
+                team.addMember(id);
+                Bukkit.getPluginManager().callEvent(new TeamJoinEvent(Bukkit.getOfflinePlayer(nickname), team.getName()));
+            }
+        }
+        ConfigManager.saveTeamsToConfig();
+    }
+
+    public static void leaveAllTeams(String nickname) {
+        String id = PlayerIdentifier.fromName(nickname);
+        for (Team team : teams.values()) {
+            if (team.hasMember(id)) {
+                team.removeMember(id);
                 Bukkit.getPluginManager().callEvent(new TeamLeaveEvent(Bukkit.getOfflinePlayer(nickname), team.getName()));
             }
         }
+        ConfigManager.saveTeamsToConfig();
+    }
+
+    public static void setDisplayName(Team team, String displayName) {
+        team.setDisplayName(displayName);
+        ConfigManager.saveTeamsToConfig();
     }
 
     public static boolean isInTeam(String nickname, Team team) {
-        return team != null && team.getMembers().contains(nickname);
+        String id = PlayerIdentifier.fromName(nickname);
+        return team != null && team.hasMember(id);
     }
 
     public static boolean isInAnyTeam(String nickname) {
+        String id = PlayerIdentifier.fromName(nickname);
         for (Team team : teams.values()) {
-            if (team.getMembers().contains(nickname)) {
-                return true;
-            }
+            if (team.hasMember(id)) return true;
         }
         return false;
     }
 
     public static List<Team> getPlayerTeams(String nickname) {
+        String id = PlayerIdentifier.fromName(nickname);
         List<Team> result = new ArrayList<>();
         for (Team team : teams.values()) {
-            if (team.getMembers().contains(nickname)) {
-                result.add(team);
-            }
+            if (team.hasMember(id)) result.add(team);
         }
         return result;
     }
 
-    public static Team getTeamByName(String name) {
-        return teams.get(name);
-    }
 
     public static void loadTeam(Team team) {
         teams.put(team.getName(), team);

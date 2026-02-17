@@ -31,8 +31,9 @@ public class LoadUtils {
     public static void loadFiles() {
         ConfigManager.loadConfig();
         ConfigManager.reloadMessages();
-        ConfigManager.setPrefix(ConfigManager.getMessageConfig().getString("prefix"));
+        loadIdentifierMode();
         ConfigManager.loadTeamsFromConfig();
+        ConfigManager.setPrefix(ChatUtils.formatColor(ConfigManager.getMessageConfig().getString("prefix")));
         XTeams.setTeamsLoaded(true);
     }
 
@@ -77,6 +78,17 @@ public class LoadUtils {
             AutoTeamManager.init(plugin);
             AutoTeamManager.load();
             XTeams.setEnabledAutoTeam(true);
+        }
+    }
+
+    private static void loadIdentifierMode() {
+        String mode = plugin.getConfig().getString("settings.identifier_mode", "nickname").toLowerCase();
+        if (mode.equals("uuid")) {
+            PlayerIdentifier.setMode(PlayerIdentifier.Mode.UUID);
+            plugin.getLogger().info("✅ Identifier mode: UUID (premium)");
+        } else {
+            PlayerIdentifier.setMode(PlayerIdentifier.Mode.NICKNAME);
+            plugin.getLogger().info("✅ Identifier mode: NICKNAME (non-premium)");
         }
     }
 }

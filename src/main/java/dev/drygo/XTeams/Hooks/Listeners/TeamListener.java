@@ -8,6 +8,7 @@ import dev.drygo.XTeams.Hooks.Minecraft.Managers.MinecraftTeamManager;
 import dev.drygo.XTeams.Managers.TeamManager;
 import dev.drygo.XTeams.Models.Team;
 import dev.drygo.XTeams.XTeams;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,14 +22,14 @@ public class TeamListener implements Listener {
         if (!XTeams.isEnabledAutoTeam()) return;
         if (AutoTeamManager.enabledOpByPass() && player.isOp()) return;
         if (!TeamManager.getPlayerTeams(player.getName()).isEmpty()) return;
-        Team autoTeamTeam = TeamManager.getTeamByName(AutoTeamManager.getAutoTeamTeam());
+        Team autoTeamTeam = TeamManager.getTeam(AutoTeamManager.getAutoTeamTeam());
         if (autoTeamTeam == null) return;
         TeamManager.joinTeam(player.getName(), autoTeamTeam);
     }
 
     @EventHandler
     public void onTeamJoin(TeamJoinEvent event) {
-        Player player = (Player) event.getPlayer();
+        Player player = Bukkit.getPlayer(event.getPlayer().getUniqueId());
         Team team = TeamManager.getTeam(event.getTeamName());
         if (XTeams.isEnabledLuckPermsHook()) {
             LuckPermsGroupManager.applyGroup(player, team.getName());
