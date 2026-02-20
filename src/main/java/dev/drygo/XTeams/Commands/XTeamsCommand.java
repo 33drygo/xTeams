@@ -4,6 +4,7 @@ import dev.drygo.XTeams.Hooks.AutoTeam.Managers.AutoTeamManager;
 import dev.drygo.XTeams.Hooks.LuckPerms.Managers.LuckPermsGroupManager;
 import dev.drygo.XTeams.Hooks.Minecraft.Managers.MinecraftTeamManager;
 import dev.drygo.XTeams.Managers.TeamManager;
+import dev.drygo.XTeams.Utils.PlayerSelector;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -382,19 +383,7 @@ public class XTeamsCommand implements CommandExecutor {
             String targetName = args[2];
             boolean allTargets = targetName.equals("*");
 
-            Set<String> affectedPlayers;
-            if (allTargets) {
-                if (allTeams) {
-                    affectedPlayers = TeamManager.getAllPlayersInTeams();
-                } else {
-                    // Solo jugadores en ese equipo
-                    Team singleTeam = teamsSet.iterator().next();
-                    affectedPlayers = TeamManager.getTeamMembers(singleTeam);
-                }
-            } else {
-                affectedPlayers = new HashSet<>();
-                affectedPlayers.add(targetName);
-            }
+            Set<String> affectedPlayers = resolveTargets(targetName, teamsSet);
 
             if (affectedPlayers.isEmpty()) {
                 String msgKey = allTeams
@@ -492,17 +481,20 @@ public class XTeamsCommand implements CommandExecutor {
         if (args.length > 2) {
             String targetName = args[2];
             boolean allTargets = targetName.equals("*");
-
-            Set<String> affectedPlayers;
-
-            if (allTargets) {
-                affectedPlayers = allTeams
-                        ? TeamManager.getAllPlayersInTeams()
-                        : TeamManager.getTeamMembers(team);
+            Set<Team> teamsSet;
+            if (allTeams) {
+                teamsSet = new HashSet<>(TeamManager.getAllTeams());
             } else {
-                affectedPlayers = new HashSet<>();
-                affectedPlayers.add(targetName);
+                Team singleTeam = TeamManager.getTeam(teamName);
+                if (singleTeam == null) {
+                    sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null)
+                            .replace("%team%", teamName));
+                    return false;
+                }
+                teamsSet = Collections.singleton(singleTeam);
             }
+
+            Set<String> affectedPlayers = resolveTargets(targetName, teamsSet);
 
             if (affectedPlayers.isEmpty()) {
                 String msgKey = allTeams
@@ -666,11 +658,17 @@ public class XTeamsCommand implements CommandExecutor {
         sender.sendMessage(ChatUtils.formatColor("&f                                ᴀᴜᴛᴏ-ᴛᴇᴀᴍ #707070» #FFFAAB" + autoTeamStatus));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("#fff18d&l                      ᴠᴇʀꜱɪᴏɴ ᴄʜᴀɴɢᴇꜱ"));
-        sender.sendMessage(ChatUtils.formatColor("&f            #7070701. #FFFAABMake save config on team class setters,"));
-        sender.sendMessage(ChatUtils.formatColor("&f            #707070  instead of TeamManager"));
+        sender.sendMessage(ChatUtils.formatColor("&f            #7070701. #FFFAABInternal performance improvements"));
+        sender.sendMessage(ChatUtils.formatColor("&f            #7070702. #FFFAABFixed duplicate saves when"));
+        sender.sendMessage(ChatUtils.formatColor("&f            #707070   #FFFAABjoining, leaving or deleting teams"));
+        sender.sendMessage(ChatUtils.formatColor("&f            #7070703. #FFFAABOptimized team data system"));
+        sender.sendMessage(ChatUtils.formatColor("&f            #7070704. #FFFAABImproved data handling"));
+        sender.sendMessage(ChatUtils.formatColor("&f            #7070705. #FFFAABImproved placeholder support"));
+        sender.sendMessage(ChatUtils.formatColor("&f            #7070706. #FFFAABIdentification by UUID or username"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("#fff18d&l               ᴅʀʏɢᴏ'ꜱ ɴᴏᴛᴇ ᴏꜰ ᴛʜᴇ ᴠᴇʀꜱɪᴏɴ"));
-        sender.sendMessage(ChatUtils.formatColor("&f  #FFFAAB            A fast bug fix I just found lol"));
+        sender.sendMessage(ChatUtils.formatColor("&f  #FFFAAB         Cleaned up a lot of things under the hood,"));
+        sender.sendMessage(ChatUtils.formatColor("&f  #FFFAAB         the plugin should feel smoother now. Enjoy!"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         return false;
@@ -678,5 +676,14 @@ public class XTeamsCommand implements CommandExecutor {
 
     private boolean dontHavePermission(CommandSender sender, String perm) {
         return !sender.hasPermission(perm) && !sender.hasPermission("xteams.admin") && !sender.isOp();
+    }
+
+    private Set<String> resolveTargets(String targetArg, Set<Team> teamsScope) {
+        if (!PlayerSelector.isSelector(targetArg)) {
+            Set<String> single = new HashSet<>();
+            single.add(targetArg);
+            return single;
+        }
+        return PlayerSelector.resolve(targetArg);
     }
 }

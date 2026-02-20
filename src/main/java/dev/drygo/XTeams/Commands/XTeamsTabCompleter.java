@@ -67,20 +67,12 @@ public class XTeamsTabCompleter implements TabCompleter {
                     return Collections.singletonList("\"" + displayNameMessage + "\"");
                 }
             }
-            case "join" -> {
+            case "join", "leave" -> {
                 if (args.length == 2) {
                     return getMatches(args[1], getTeamsListWithStar());
                 }
                 if (args.length == 3) {
-                    return getMatches(args[2], getPlayersListWithStar());
-                }
-            }
-            case "leave" -> {
-                if (args.length == 2) {
-                    return getMatches(args[1], getTeamsListWithStar());
-                }
-                if (args.length == 3) {
-                    return getMatches(args[2], getPlayersListWithStar());
+                    return getMatches(args[2], getPlayerSelectorsAndList());
                 }
             }
             case "info", "list", "help", "sync" -> {
@@ -144,5 +136,16 @@ public class XTeamsTabCompleter implements TabCompleter {
         List<String> playerList = new ArrayList<>(players);
         playerList.sort(String::compareToIgnoreCase);
         return playerList;
+    }
+
+    private List<String> getPlayerSelectorsAndList() {
+        List<String> options = new ArrayList<>();
+        options.add("@online");
+        options.add("@team");
+        options.add("@teamall");
+        options.add("@noteam");
+        options.add("*");
+        options.addAll(getPlayersList());
+        return options;
     }
 }
