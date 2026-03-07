@@ -8,11 +8,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PlayerSelector {
+
     public static Set<String> resolve(String selector) {
         return switch (selector.toLowerCase()) {
-            case "*", "@teamall" -> TeamManager.getAllPlayersInTeams();
+            // Devuelve los nicknames de TODOS los jugadores en algún equipo
+            case "*", "@teamall" -> TeamManager.getAllPlayerNamesInTeams();
+            // Devuelve los nicknames de los jugadores online
             case "@online" -> getOnlinePlayerNames();
+            // Devuelve los nicknames de los jugadores online que están en algún equipo
             case "@team" -> getOnlinePlayersInTeam();
+            // Devuelve los nicknames de los jugadores online que NO están en ningún equipo
             case "@noteam" -> getOnlinePlayersWithoutTeam();
             default -> {
                 Set<String> single = new HashSet<>();
@@ -26,6 +31,10 @@ public class PlayerSelector {
         return arg.equals("*") || arg.startsWith("@");
     }
 
+    // -------------------------------------------------------------------------
+    // Helpers — todos devuelven nicknames visibles, nunca IDs internos
+    // -------------------------------------------------------------------------
+
     private static Set<String> getOnlinePlayerNames() {
         Set<String> names = new HashSet<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -35,10 +44,10 @@ public class PlayerSelector {
     }
 
     private static Set<String> getOnlinePlayersInTeam() {
-        Set<String> inTeams = TeamManager.getAllPlayersInTeams();
         Set<String> result = new HashSet<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (inTeams.contains(player.getName())) {
+            // isInAnyTeam recibe nickname y hace la conversión interna
+            if (TeamManager.isInAnyTeam(player.getName())) {
                 result.add(player.getName());
             }
         }
