@@ -4,10 +4,10 @@ import dev.drygo.XTeams.Hooks.AutoTeam.Managers.AutoTeamManager;
 import dev.drygo.XTeams.Hooks.LuckPerms.Managers.LuckPermsGroupManager;
 import dev.drygo.XTeams.Hooks.Minecraft.Managers.MinecraftTeamManager;
 import dev.drygo.XTeams.Managers.TeamManager;
+import dev.drygo.XTeams.Utils.PlayerIdentifier;
 import dev.drygo.XTeams.Utils.PlayerSelector;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -129,6 +129,10 @@ public class XTeamsCommand implements CommandExecutor {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Handlers
+    // -------------------------------------------------------------------------
+
     private boolean handleCreate(CommandSender sender, String[] args) {
         if (args.length < 2) {
             sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_specified.create", null));
@@ -141,7 +145,6 @@ public class XTeamsCommand implements CommandExecutor {
 
         String teamName = args[1];
         int priority;
-
         try {
             priority = Integer.parseInt(args[2]);
         } catch (NumberFormatException e) {
@@ -149,15 +152,15 @@ public class XTeamsCommand implements CommandExecutor {
             return false;
         }
 
-        Team team = TeamManager.getTeam(teamName);
-        if (team != null) {
-            sender.sendMessage(ChatUtils.getMessage("error.commands.team_already_exists", null).replace("%team%", teamName));
+        if (TeamManager.getTeam(teamName) != null) {
+            sender.sendMessage(ChatUtils.getMessage("error.commands.team_already_exists", null)
+                    .replace("%team%", teamName));
             return false;
         }
 
         TeamManager.createTeam(teamName, teamName, priority, new HashSet<>());
-        sender.sendMessage(ChatUtils.getMessage("commands.create.success", null).replace("%team%", teamName));
-
+        sender.sendMessage(ChatUtils.getMessage("commands.create.success", null)
+                .replace("%team%", teamName));
         return true;
     }
 
@@ -185,12 +188,14 @@ public class XTeamsCommand implements CommandExecutor {
 
         Team team = TeamManager.getTeam(teamName);
         if (team == null) {
-            sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null).replace("%team%", teamName));
+            sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null)
+                    .replace("%team%", teamName));
             return false;
         }
 
         TeamManager.deleteTeam(team);
-        sender.sendMessage(ChatUtils.getMessage("commands.delete.success", null).replace("%team%", teamName));
+        sender.sendMessage(ChatUtils.getMessage("commands.delete.success", null)
+                .replace("%team%", teamName));
         return true;
     }
 
@@ -212,13 +217,15 @@ public class XTeamsCommand implements CommandExecutor {
 
         Team team = TeamManager.getTeam(teamName);
         if (team == null) {
-            sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null).replace("%team%", teamName));
+            sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null)
+                    .replace("%team%", teamName));
             return false;
         }
 
-        team.setDisplayName(displayName);
-
-        sender.sendMessage(ChatUtils.getMessage("commands.setdisplay.success", null).replace("%team%", teamName).replace("%display_name%", displayName));
+        TeamManager.setDisplayName(team, displayName);
+        sender.sendMessage(ChatUtils.getMessage("commands.setdisplay.success", null)
+                .replace("%team%", teamName)
+                .replace("%display_name%", displayName));
         return true;
     }
 
@@ -229,19 +236,23 @@ public class XTeamsCommand implements CommandExecutor {
         }
 
         String teamName = args[1];
-        Team team = TeamManager.getTeam (teamName);
+        Team team = TeamManager.getTeam(teamName);
         if (team == null) {
-            sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null).replace("%team%", teamName));
+            sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null)
+                    .replace("%team%", teamName));
             return false;
         }
 
         Map<String, Object> teamInfo = TeamManager.getTeamInfo(team);
         String displayName = (String) teamInfo.get("displayName");
-        String name = (String) teamInfo.get("name");
-        int priority = (int) teamInfo.get("priority");
+        String name        = (String) teamInfo.get("name");
+        int priority       = (int)    teamInfo.get("priority");
+
+        // getTeamInfo ya devuelve nombres visibles resueltos (nunca IDs internos)
         @SuppressWarnings("unchecked")
         Set<String> membersSet = (Set<String>) teamInfo.get("members");
         List<String> members = new ArrayList<>(membersSet);
+        members.sort(String::compareToIgnoreCase);
 
         StringBuilder message = new StringBuilder();
         for (String line : ChatUtils.getMessageList("commands.teaminfo.string.header")) {
@@ -259,7 +270,9 @@ public class XTeamsCommand implements CommandExecutor {
         } else {
             message.append(ChatUtils.getMessage("commands.teaminfo.string.members_header", null)).append("\n");
             for (String member : members) {
-                message.append(ChatUtils.getMessage("commands.teaminfo.string.members_row", null).replace("%member%", member)).append("\n");
+                // member ya es nickname visible
+                message.append(ChatUtils.getMessage("commands.teaminfo.string.members_row", null)
+                        .replace("%member%", member)).append("\n");
             }
         }
 
@@ -275,16 +288,19 @@ public class XTeamsCommand implements CommandExecutor {
 
     private boolean handleInfoPlayer(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(ChatUtils.getMessage("error.commands.player_not_found", null).replace("%target%", sender.getName()));
+            sender.sendMessage(ChatUtils.getMessage("error.commands.player_not_found", null)
+                    .replace("%target%", sender.getName()));
             return false;
         }
 
+        // El argumento siempre es un nickname visible
         String targetName = args[1];
 
         List<Team> playerTeams = TeamManager.getPlayerTeams(targetName);
 
         if (playerTeams.isEmpty()) {
-            sender.sendMessage(ChatUtils.getMessage("commands.playerinfo.string.no_teams", null).replace("%target%", targetName));
+            sender.sendMessage(ChatUtils.getMessage("commands.playerinfo.string.no_teams", null)
+                    .replace("%target%", targetName));
             return true;
         }
 
@@ -306,14 +322,15 @@ public class XTeamsCommand implements CommandExecutor {
                         .replace("%priority%", String.valueOf(mainTeam.getPriority())))
                 .append("\n");
 
-        message.append(ChatUtils.getMessage("commands.playerinfo.string.team_list_header", null).replace("%target%", targetName)).append("\n");
+        message.append(ChatUtils.getMessage("commands.playerinfo.string.team_list_header", null)
+                .replace("%target%", targetName)).append("\n");
 
-        for (Team team : playerTeams) {
+        for (Team t : playerTeams) {
             message.append(ChatUtils.getMessage("commands.playerinfo.string.team_list_row", null)
                             .replace("%target%", targetName)
-                            .replace("%display_name%", team.getDisplayName())
-                            .replace("%team%", team.getName())
-                            .replace("%priority%", String.valueOf(team.getPriority())))
+                            .replace("%display_name%", t.getDisplayName())
+                            .replace("%team%", t.getName())
+                            .replace("%priority%", String.valueOf(t.getPriority())))
                     .append("\n");
         }
 
@@ -347,6 +364,7 @@ public class XTeamsCommand implements CommandExecutor {
         sender.sendMessage(message.toString());
         return true;
     }
+
     private boolean handleJoin(CommandSender sender, String[] args) {
         if (args.length < 2) {
             if (sender instanceof Player player) {
@@ -378,50 +396,45 @@ public class XTeamsCommand implements CommandExecutor {
             teamsSet = Collections.singleton(team);
         }
 
-        // Sí especifican jugador
+        // Con jugador objetivo explícito
         if (args.length > 2) {
-            String targetName = args[2];
-            boolean allTargets = targetName.equals("*");
+            String targetArg = args[2];
+            boolean allTargets = targetArg.equals("*");
 
-            Set<String> affectedPlayers = resolveTargets(targetName, teamsSet);
+            // resolveTargets siempre devuelve nicknames visibles
+            Set<String> affectedPlayers = resolveTargets(targetArg, teamsSet);
 
             if (affectedPlayers.isEmpty()) {
                 String msgKey = allTeams
                         ? "error.commands.join.other.none_team_or_target"
                         : "error.commands.join.other.none_target";
-
                 sender.sendMessage(ChatUtils.getMessage(msgKey, null)
                         .replace("%team%", teamName)
-                        .replace("%target%", targetName));
+                        .replace("%target%", targetArg));
                 return false;
             }
 
-            for (String playerName : affectedPlayers) {
+            for (String nickname : affectedPlayers) {
                 for (Team team : teamsSet) {
-                    if (!TeamManager.isInTeam(playerName, team)) {
-                        TeamManager.joinTeam(playerName, team);
+                    if (!TeamManager.isInTeam(nickname, team)) {
+                        TeamManager.joinTeam(nickname, team);
                     }
                 }
             }
 
             String msgKey;
-            if (allTeams && allTargets) {
-                msgKey = "commands.join.other.success_all_all";
-            } else if (allTeams) {
-                msgKey = "commands.join.other.success_target_all";
-            } else if (allTargets) {
-                msgKey = "commands.join.other.success_all_target";
-            } else {
-                msgKey = "commands.join.other.success";
-            }
+            if (allTeams && allTargets)  msgKey = "commands.join.other.success_all_all";
+            else if (allTeams)           msgKey = "commands.join.other.success_target_all";
+            else if (allTargets)         msgKey = "commands.join.other.success_all_target";
+            else                         msgKey = "commands.join.other.success";
 
             sender.sendMessage(ChatUtils.getMessage(msgKey, null)
                     .replace("%team%", teamName)
-                    .replace("%target%", targetName));
+                    .replace("%target%", targetArg));
             return true;
         }
 
-        // Si no especifica jugador, debe ser jugador ejecutando el comando
+        // Sin jugador → el ejecutor debe ser Player
         if (!(sender instanceof Player player)) {
             sender.sendMessage("This command can only be run by a player.");
             return false;
@@ -429,7 +442,6 @@ public class XTeamsCommand implements CommandExecutor {
 
         if (allTeams) {
             TeamManager.joinAllTeams(player.getName());
-
             player.sendMessage(ChatUtils.getMessage("commands.join.self.success_all", null)
                     .replace("%target%", player.getName()));
             return true;
@@ -447,9 +459,9 @@ public class XTeamsCommand implements CommandExecutor {
         player.sendMessage(ChatUtils.getMessage("commands.join.self.success", null)
                 .replace("%team%", teamName)
                 .replace("%target%", player.getName()));
-
         return true;
     }
+
     private boolean handleLeave(CommandSender sender, String[] args) {
         if (args.length < 2) {
             if (sender instanceof Player player) {
@@ -478,63 +490,48 @@ public class XTeamsCommand implements CommandExecutor {
             return false;
         }
 
+        // Con jugador objetivo explícito
         if (args.length > 2) {
-            String targetName = args[2];
-            boolean allTargets = targetName.equals("*");
-            Set<Team> teamsSet;
-            if (allTeams) {
-                teamsSet = new HashSet<>(TeamManager.getAllTeams());
-            } else {
-                Team singleTeam = TeamManager.getTeam(teamName);
-                if (singleTeam == null) {
-                    sender.sendMessage(ChatUtils.getMessage("error.commands.team_not_found", null)
-                            .replace("%team%", teamName));
-                    return false;
-                }
-                teamsSet = Collections.singleton(singleTeam);
-            }
+            String targetArg = args[2];
+            boolean allTargets = targetArg.equals("*");
 
-            Set<String> affectedPlayers = resolveTargets(targetName, teamsSet);
+            Set<Team> teamsSet = allTeams
+                    ? new HashSet<>(TeamManager.getAllTeams())
+                    : Collections.singleton(team);
+
+            Set<String> affectedPlayers = resolveTargets(targetArg, teamsSet);
 
             if (affectedPlayers.isEmpty()) {
                 String msgKey = allTeams
                         ? "error.commands.leave.other.none_in_anyteam"
                         : "error.commands.leave.other.none_in_team";
-
                 sender.sendMessage(ChatUtils.getMessage(msgKey, null)
                         .replace("%team%", teamName)
-                        .replace("%target%", targetName));
+                        .replace("%target%", targetArg));
                 return false;
             }
 
-            Set<String> playersCopy = new HashSet<>(affectedPlayers);
-            for (String playerName : playersCopy) {
+            for (String nickname : new HashSet<>(affectedPlayers)) {
                 if (allTeams) {
-                    TeamManager.leaveAllTeams(playerName);
+                    TeamManager.leaveAllTeams(nickname);
                 } else {
-                    TeamManager.leaveTeam(playerName, team);
+                    TeamManager.leaveTeam(nickname, team);
                 }
             }
 
             String msgKey;
-            if (allTeams && allTargets) {
-                msgKey = "commands.leave.other.all.success_all";
-            } else if (allTeams) {
-                msgKey = "commands.leave.other.target.success_all";
-            } else if (allTargets) {
-                msgKey = "commands.leave.other.all.success";
-            } else {
-                msgKey = "commands.leave.other.target.success";
-            }
+            if (allTeams && allTargets)  msgKey = "commands.leave.other.all.success_all";
+            else if (allTeams)           msgKey = "commands.leave.other.target.success_all";
+            else if (allTargets)         msgKey = "commands.leave.other.all.success";
+            else                         msgKey = "commands.leave.other.target.success";
 
             sender.sendMessage(ChatUtils.getMessage(msgKey, null)
                     .replace("%team%", teamName)
-                    .replace("%target%", targetName));
-
+                    .replace("%target%", targetArg));
             return true;
         }
 
-        // Si no especifica jugador, debe ser jugador que ejecuta el comando
+        // Sin jugador → el ejecutor debe ser Player
         if (!(sender instanceof Player player)) {
             sender.sendMessage("This command can only be run by a player.");
             return false;
@@ -548,7 +545,6 @@ public class XTeamsCommand implements CommandExecutor {
             String msgKey = allTeams
                     ? "error.commands.leave.self.not_in_anyteam"
                     : "error.commands.leave.self.not_in_team";
-
             player.sendMessage(ChatUtils.getMessage(msgKey, null)
                     .replace("%team%", teamName)
                     .replace("%target%", player.getName()));
@@ -565,7 +561,6 @@ public class XTeamsCommand implements CommandExecutor {
                     .replace("%team%", teamName)
                     .replace("%target%", player.getName()));
         }
-
         return true;
     }
 
@@ -573,7 +568,10 @@ public class XTeamsCommand implements CommandExecutor {
         int count = 0;
         for (String teamName : TeamManager.listTeams()) {
             Team team = TeamManager.getTeam(teamName);
-            for (String memberName : team.getMembers()) {
+            // Iteramos sobre los IDs internos del equipo y resolvemos a nickname
+            // para poder buscar el player online con Bukkit.getPlayerExact
+            for (String memberId : team.getMembers()) {
+                String memberName = PlayerIdentifier.resolveName(memberId);
                 Player player = Bukkit.getPlayerExact(memberName);
                 if (player != null && player.isOnline()) {
                     if (XTeams.isEnabledLuckPermsHook()) {
@@ -586,10 +584,9 @@ public class XTeamsCommand implements CommandExecutor {
                 }
             }
         }
-
-        sender.sendMessage(ChatUtils.getMessage("commands.sync.success", null).replace("%count%", String.valueOf(count)));
+        sender.sendMessage(ChatUtils.getMessage("commands.sync.success", null)
+                .replace("%count%", String.valueOf(count)));
     }
-
 
     private boolean handleReload(CommandSender sender) {
         plugin.reloadConfig();
@@ -601,6 +598,7 @@ public class XTeamsCommand implements CommandExecutor {
         sender.sendMessage(ChatUtils.getMessage("commands.reload.success", null));
         return false;
     }
+
     private boolean handleHelp(CommandSender sender) {
         List<String> helpMessages = ConfigManager.getMessageConfig().getStringList("commands.help");
 
@@ -636,17 +634,18 @@ public class XTeamsCommand implements CommandExecutor {
         }
         return false;
     }
+
     private boolean handleInfo(CommandSender sender) {
-        String placeholderStatus = XTeams.isWorkingPlaceholderAPI() ? "#a0ff72✔" : "#ff7272✖";
-        String luckPermsHookStatus = XTeams.isEnabledLuckPermsHook() ? "#a0ff72✔" : "#ff7272✖";
+        String placeholderStatus       = XTeams.isWorkingPlaceholderAPI()    ? "#a0ff72✔" : "#ff7272✖";
+        String luckPermsHookStatus     = XTeams.isEnabledLuckPermsHook()     ? "#a0ff72✔" : "#ff7272✖";
         String minecraftTeamHookStatus = XTeams.isEnabledMinecraftTeamHook() ? "#a0ff72✔" : "#ff7272✖";
-        String autoTeamStatus = XTeams.isEnabledAutoTeam() ? "#a0ff72✔" : "#ff7272✖";
+        String autoTeamStatus          = XTeams.isEnabledAutoTeam()          ? "#a0ff72✔" : "#ff7272✖";
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("&8                            #ffbaff&lx&r&lTeams &8» &r&fInfo"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("#fff18d&l                           ᴍᴀᴅᴇ ʙʏ"));
-        sender.sendMessage(ChatUtils.formatColor("&f                           xDrygo #707070» &7&o(@eldrygo)"));
+        sender.sendMessage(ChatUtils.formatColor("&f                   Drygo #707070» &7&o(@33drygo / drygo.dev)"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("#fff18d&l                  ʀᴜɴɴɪɴɢ ᴘʟᴜɢɪɴ ᴠᴇʀꜱɪᴏɴ"));
         sender.sendMessage(ChatUtils.formatColor("&f                                    " + plugin.version));
@@ -674,15 +673,14 @@ public class XTeamsCommand implements CommandExecutor {
         return false;
     }
 
+
     private boolean dontHavePermission(CommandSender sender, String perm) {
         return !sender.hasPermission(perm) && !sender.hasPermission("xteams.admin") && !sender.isOp();
     }
 
     private Set<String> resolveTargets(String targetArg, Set<Team> teamsScope) {
         if (!PlayerSelector.isSelector(targetArg)) {
-            Set<String> single = new HashSet<>();
-            single.add(targetArg);
-            return single;
+            return Collections.singleton(targetArg);
         }
         return PlayerSelector.resolve(targetArg);
     }
