@@ -26,6 +26,7 @@ public class XTeams extends JavaPlugin {
         LoadUtils.init(this);
         LoadUtils.loadFeatures();
         LogsUtils.sendStartupMessage();
+        LogsUtils.sendUpdateMessage();
     }
 
     @Override

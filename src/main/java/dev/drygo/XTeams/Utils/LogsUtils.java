@@ -1,5 +1,6 @@
 package dev.drygo.XTeams.Utils;
 
+import dev.drygo.XTeams.UpdateChecker.ModrinthUpdateChecker;
 import org.bukkit.Bukkit;
 import dev.drygo.XTeams.XTeams;
 
@@ -22,5 +23,19 @@ public class LogsUtils {
         Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("#fff18dVersion: #ffffff" + plugin.version));
         Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("#fff18dDeveloped by: #ffffff" + String.join(", ", plugin.getDescription().getAuthors())));
         Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor(" "));
+    }
+
+    public static void sendUpdateMessage() {
+        String latestVersion = ModrinthUpdateChecker.isUpdateAvailable(plugin.version);
+
+        if (!latestVersion.equals("false")) {
+            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor(" "));
+            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&d&lx&r&lTeams &eNew Update Available!"));
+            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&cCurrent Version: &f" + plugin.version));
+            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&aLatest Version: &f" + latestVersion));
+            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor(" "));
+            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&e&lYou can download it at: &fhttps://modrinth.com/plugin/xteams"));
+            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor(" "));
+        }
     }
 }
