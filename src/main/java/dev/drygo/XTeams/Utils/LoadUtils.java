@@ -82,7 +82,8 @@ public class LoadUtils {
     }
 
     private static void loadIdentifierMode() {
-        String mode = plugin.getConfig().getString("settings.identifier_mode", "nickname").toLowerCase();
+        String raw = plugin.getConfig().getString("settings.identifier_mode", "nickname");
+        String mode = (raw != null ? raw : "nickname").toLowerCase();
         if (mode.equals("uuid")) {
             PlayerIdentifier.setMode(PlayerIdentifier.Mode.UUID);
             plugin.getLogger().info("✅ Identifier mode: UUID (premium)");
