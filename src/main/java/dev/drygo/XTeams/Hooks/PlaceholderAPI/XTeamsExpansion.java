@@ -131,7 +131,7 @@ public class XTeamsExpansion extends PlaceholderExpansion {
             String[] parts = rest.split(":", 2);
             if (parts.length == 2) {
                 Team team = TeamManager.getTeam(parts[1]);
-                return bool(team != null && team.hasMember(parts[0]));
+                return bool(team != null && TeamManager.isInTeam(parts[0], team));
             }
             return "null";
         }
@@ -182,7 +182,7 @@ public class XTeamsExpansion extends PlaceholderExpansion {
         if (params.startsWith("in_team_")) {
             String teamName = params.substring("in_team_".length());
             Team team = TeamManager.getTeam(teamName);
-            return bool(team != null && team.hasMember(playerName));
+            return bool(team != null && TeamManager.isInTeam(playerName, team));
         }
 
         return null;
