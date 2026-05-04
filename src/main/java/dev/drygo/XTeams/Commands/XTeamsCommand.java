@@ -112,8 +112,7 @@ public class XTeamsCommand implements CommandExecutor {
                     sender.sendMessage(ChatUtils.getMessage("error.commands.no_permission", null));
                     return true;
                 }
-                handleSync(sender);
-                return false;
+                return handleSync(sender);
             }
             case "help" -> {
                 if (dontHavePermission(sender, "xteams.command.help")) {
@@ -402,7 +401,7 @@ public class XTeamsCommand implements CommandExecutor {
             boolean allTargets = targetArg.equals("*");
 
             // resolveTargets siempre devuelve nicknames visibles
-            Set<String> affectedPlayers = resolveTargets(targetArg, teamsSet);
+            Set<String> affectedPlayers = resolveTargets(targetArg);
 
             if (affectedPlayers.isEmpty()) {
                 String msgKey = allTeams
@@ -495,11 +494,7 @@ public class XTeamsCommand implements CommandExecutor {
             String targetArg = args[2];
             boolean allTargets = targetArg.equals("*");
 
-            Set<Team> teamsSet = allTeams
-                    ? new HashSet<>(TeamManager.getAllTeams())
-                    : Collections.singleton(team);
-
-            Set<String> affectedPlayers = resolveTargets(targetArg, teamsSet);
+            Set<String> affectedPlayers = resolveTargets(targetArg);
 
             if (affectedPlayers.isEmpty()) {
                 String msgKey = allTeams
@@ -564,28 +559,26 @@ public class XTeamsCommand implements CommandExecutor {
         return true;
     }
 
-    private void handleSync(CommandSender sender) {
+    private boolean handleSync(CommandSender sender) {
         int count = 0;
-        for (String teamName : TeamManager.listTeams()) {
-            Team team = TeamManager.getTeam(teamName);
-            // Iteramos sobre los IDs internos del equipo y resolvemos a nickname
-            // para poder buscar el player online con Bukkit.getPlayerExact
-            for (String memberId : team.getMembers()) {
-                String memberName = PlayerIdentifier.resolveName(memberId);
-                Player player = Bukkit.getPlayerExact(memberName);
-                if (player != null && player.isOnline()) {
-                    if (XTeams.isEnabledLuckPermsHook()) {
-                        LuckPermsGroupManager.applyGroup(player, team.getName());
-                    }
-                    if (XTeams.isEnabledMinecraftTeamHook()) {
-                        MinecraftTeamManager.applyGroup(player, team.getName());
-                    }
-                    count++;
+        // Iterar online players y comparar identificadores: evita la resolución
+        // UUID→nombre que falla cuando Bukkit no tiene el nombre cacheado.
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            String id = PlayerIdentifier.fromPlayer(player);
+            for (Team team : TeamManager.getAllTeams()) {
+                if (!team.hasMember(id)) continue;
+                if (XTeams.isEnabledLuckPermsHook()) {
+                    LuckPermsGroupManager.applyGroup(player, team.getName());
                 }
+                if (XTeams.isEnabledMinecraftTeamHook()) {
+                    MinecraftTeamManager.applyGroup(player, team.getName());
+                }
+                count++;
             }
         }
         sender.sendMessage(ChatUtils.getMessage("commands.sync.success", null)
                 .replace("%count%", String.valueOf(count)));
+        return true;
     }
 
     private boolean handleReload(CommandSender sender) {
@@ -595,8 +588,14 @@ public class XTeamsCommand implements CommandExecutor {
         if (XTeams.isEnabledAutoTeam()) {
             AutoTeamManager.load();
         }
+        if (XTeams.isEnabledLuckPermsHook()) {
+            LuckPermsGroupManager.reload();
+        }
+        if (XTeams.isEnabledMinecraftTeamHook()) {
+            MinecraftTeamManager.reload();
+        }
         sender.sendMessage(ChatUtils.getMessage("commands.reload.success", null));
-        return false;
+        return true;
     }
 
     private boolean handleHelp(CommandSender sender) {
@@ -632,7 +631,7 @@ public class XTeamsCommand implements CommandExecutor {
         for (String l : helpMessages) {
             sender.sendMessage(ChatUtils.formatColor(l));
         }
-        return false;
+        return true;
     }
 
     private boolean handleInfo(CommandSender sender) {
@@ -670,7 +669,7 @@ public class XTeamsCommand implements CommandExecutor {
         sender.sendMessage(ChatUtils.formatColor("&f  #FFFAAB         the plugin should feel smoother now. Enjoy!"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
         sender.sendMessage(ChatUtils.formatColor("&7"));
-        return false;
+        return true;
     }
 
 
@@ -678,7 +677,7 @@ public class XTeamsCommand implements CommandExecutor {
         return !sender.hasPermission(perm) && !sender.hasPermission("xteams.admin") && !sender.isOp();
     }
 
-    private Set<String> resolveTargets(String targetArg, Set<Team> teamsScope) {
+    private Set<String> resolveTargets(String targetArg) {
         if (!PlayerSelector.isSelector(targetArg)) {
             return Collections.singleton(targetArg);
         }
