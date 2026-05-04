@@ -43,15 +43,15 @@ public class XTeamsTabCompleter implements TabCompleter {
 
         switch (args[0].toLowerCase()) {
             case "create" -> {
-                if (args.length == 2) return Collections.singletonList(teamNameMessage);
-                if (args.length == 3) return Collections.singletonList(priorityMessage);
+                if (args.length == 2) return getMatches(args[1], Collections.singletonList(teamNameMessage));
+                if (args.length == 3) return getMatches(args[2], Collections.singletonList(priorityMessage));
             }
             case "delete" -> {
                 if (args.length == 2) return getMatches(args[1], getTeamsListWithStar());
             }
             case "setdisplay" -> {
                 if (args.length == 2) return getMatches(args[1], getTeamsList());
-                if (args.length == 3) return Collections.singletonList("\"" + displayNameMessage + "\"");
+                if (args.length == 3) return getMatches(args[2], Collections.singletonList("\"" + displayNameMessage + "\""));
             }
             case "join", "leave" -> {
                 if (args.length == 2) return getMatches(args[1], getTeamsListWithStar());
