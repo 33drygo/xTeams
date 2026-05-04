@@ -1,5 +1,6 @@
 package dev.drygo.XTeams.Hooks.Minecraft.Managers;
 
+import dev.drygo.XTeams.Managers.TeamManager;
 import dev.drygo.XTeams.XTeams;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -24,6 +25,7 @@ public class MinecraftTeamManager {
     }
 
     private static void loadFromConfig() {
+        teamGroupMap.clear();
         ConfigurationSection section = plugin.getConfig().getConfigurationSection("hooks.minecraft_team.team_groups");
         if (section != null) {
             for (String teamName : section.getKeys(false)) {
@@ -33,6 +35,10 @@ public class MinecraftTeamManager {
                 }
             }
         }
+    }
+
+    public static void reload() {
+        loadFromConfig();
     }
 
     public static void applyGroup(Player player, String teamName) {
@@ -55,7 +61,9 @@ public class MinecraftTeamManager {
         Team team = scoreboard.getTeam(teamId);
         if (team == null && add) {
             team = scoreboard.registerNewTeam(teamId);
-            team.setDisplayName(ChatColor.translateAlternateColorCodes('&', teamName));
+            dev.drygo.XTeams.Models.Team xTeam = TeamManager.getTeam(teamName);
+            String display = xTeam != null ? xTeam.getDisplayName() : teamName;
+            team.setDisplayName(ChatColor.translateAlternateColorCodes('&', display));
         }
 
         if (add) {

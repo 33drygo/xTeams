@@ -27,6 +27,7 @@ public class LuckPermsGroupManager {
     }
 
     private static void loadFromConfig() {
+        teamGroupMap.clear();
         ConfigurationSection section = plugin.getConfig().getConfigurationSection("hooks.luckperms.team_groups");
         if (section != null) {
             for (String team : section.getKeys(false)) {
@@ -36,6 +37,10 @@ public class LuckPermsGroupManager {
                 }
             }
         }
+    }
+
+    public static void reload() {
+        loadFromConfig();
     }
 
     private static boolean isLuckPermsAvailable() {
