@@ -32,6 +32,7 @@ public class TeamListener implements Listener {
         Player player = Bukkit.getPlayer(event.getPlayer().getUniqueId());
         if (player == null) return;
         Team team = TeamManager.getTeam(event.getTeamName());
+        if (team == null) return;
         if (XTeams.isEnabledLuckPermsHook()) {
             LuckPermsGroupManager.applyGroup(player, team.getName());
         }
