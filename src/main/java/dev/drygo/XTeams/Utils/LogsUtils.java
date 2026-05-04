@@ -26,16 +26,19 @@ public class LogsUtils {
     }
 
     public static void sendUpdateMessage() {
-        String latestVersion = ModrinthUpdateChecker.isUpdateAvailable(plugin.version);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String latestVersion = ModrinthUpdateChecker.isUpdateAvailable(plugin.version);
+            if (latestVersion.equals("false")) return;
 
-        if (!latestVersion.equals("false")) {
-            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor(" "));
-            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&d&lx&r&lTeams &eNew Update Available!"));
-            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&cCurrent Version: &f" + plugin.version));
-            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&aLatest Version: &f" + latestVersion));
-            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor(" "));
-            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&e&lYou can download it at: &fhttps://modrinth.com/plugin/xteams"));
-            Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor(" "));
-        }
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor(" "));
+                Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&d&lx&r&lTeams &eNew Update Available!"));
+                Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&cCurrent Version: &f" + plugin.version));
+                Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&aLatest Version: &f" + latestVersion));
+                Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor(" "));
+                Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor("&e&lYou can download it at: &fhttps://modrinth.com/plugin/xteams"));
+                Bukkit.getConsoleSender().sendMessage(ChatUtils.formatColor(" "));
+            });
+        });
     }
 }
