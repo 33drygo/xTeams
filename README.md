@@ -2,6 +2,9 @@
 
 # xTeams 👥
 
+> [!WARNING]
+> **xTeams is archived and no longer maintained.** Its successor is **[Stella](https://modrinth.com/plugin/stella-was-taken)** — a separate plugin rebuilt from the ground up. This repository is kept as a time capsule; no new releases or fixes are planned.
+
 **xTeams** is a powerful and flexible team management plugin for Minecraft servers. It allows server administrators to create, manage, and organize teams with advanced features and full PlaceholderAPI support.
 
 ### Key Features 💫
@@ -17,8 +20,9 @@
 
 ### Useful Links 🔗
 
-- [Modrinth Page](https://modrinth.com/plugin/xteams) – Download the latest releases, check supported Minecraft versions, and stay up to date with xTeams updates.
-- [Wiki Documentation](https://wiki.drygo.dev/xteams) – Detailed guides, commands, permissions, placeholders, and API usage.
+- [Stella (successor)](https://modrinth.com/plugin/stella-was-taken) – The actively maintained plugin that replaces xTeams. Start here.
+- [Modrinth Page](https://modrinth.com/plugin/xteams) – The final releases of xTeams and supported Minecraft versions.
+- [Wiki Documentation](https://wiki.drygo.dev/xteams) – Archived guides, commands, permissions, placeholders, and API usage.
 
 ### Support ❓
 
@@ -27,3 +31,5 @@ For technical issues, unexpected behavior, or enhancement suggestions, please su
 ---
 
 xTeams is engineered to provide a **robust, reliable, and professional team management solution**, ensuring efficient and organized team administration for your Minecraft server.
+
+> 💡 Looking for the actively maintained version? Check out **[Stella](https://modrinth.com/plugin/stella-was-taken)**, the successor to xTeams.
